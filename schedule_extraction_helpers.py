@@ -1,6 +1,5 @@
 import csv
 import logging
-import pickle
 from datetime import datetime, timedelta
 import pytz
 import logger_config
