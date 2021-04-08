@@ -8,19 +8,15 @@ from config import PERSISTENCE_PATH, TIMEZONE
 
 
 def convert_ist_to_zurich(ist_time):
-    try:
-        local = pytz.timezone('Europe/Zurich')
-        india_tz = pytz.timezone('Asia/Calcutta')
-        indian_time = datetime.strptime(ist_time, '%d.%b.%y %I:%M %p')
-        indian_time = india_tz.localize(indian_time)
-        return local.normalize(indian_time)
-    except ValueError:
-        return ist_time
+    local = pytz.timezone('Europe/Zurich')
+    india_tz = pytz.timezone('Asia/Calcutta')
+    indian_time = datetime.strptime(ist_time, '%d.%m.%y %H:%M')
+    indian_time = india_tz.localize(indian_time)
+    return local.normalize(indian_time)
 
 
 def get_team_information(teams):
-    teams = teams.split('Vs')
-    if len(teams) <= 1:
+    if "To be announced" in teams:
         return '', '', '', ''
 
     team1 = teams[0].split('(')
@@ -34,25 +30,24 @@ def get_team_information(teams):
 
 def get_parameters(row):
     match_no = row[0]
-    teams = row[1]
-    date = row[2]
-    ist = date + ' ' + row[4]
-    ist = ist[:-4]
+    ist = row[1]
+    first_team = row[3]
+    second_team = row[4]
     swiss_time = convert_ist_to_zurich(ist)
-    return match_no, teams, date, ist, swiss_time
+    return match_no, first_team, second_team, ist, swiss_time
 
 
 def read_schedule():
     team_mappings = dict()
     schedule = dict()
-    with open(PERSISTENCE_PATH + '/ipl_schedule_raw.csv', newline='', encoding='utf-8-sig') as csvfile:
+    with open(PERSISTENCE_PATH + '/ipl_schedule_raw_2021.csv', newline='', encoding='utf-8-sig') as csvfile:
         raw_schedule = csv.reader(csvfile, delimiter=',')
         headers = next(raw_schedule)
         headers.append('SwissTime')
         print(headers)
         for row in raw_schedule:
-            match_no, teams, date, ist, swiss_time = get_parameters(row)
-            full_team1, full_team2, short_team1, short_team2 = get_team_information(teams)
+            match_no, first_team, second_team, ist, swiss_time = get_parameters(row)
+            full_team1, full_team2, short_team1, short_team2 = get_team_information([first_team, second_team])
 
             logger_config.logger.log(logging.INFO,
                                      "{}, {}, {}, {}".format(full_team1, short_team1, full_team2, short_team2))
@@ -63,7 +58,7 @@ def read_schedule():
                 team_mappings[short_team2] = full_team2
 
             schedule[match_no] = {'home': full_team1, 'away': full_team2, 'ist': ist,
-                                  'swiss_time': swiss_time, 'date': date}
+                                  'swiss_time': swiss_time, 'date': ist}
 
     return schedule, team_mappings
 
