@@ -1,5 +1,7 @@
+import os
+from dotenv import load_dotenv
+
 from DB_functions import load_all_data_from_database
-from config import TOKEN
 import telegram
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import MessageHandler, Filters
@@ -8,6 +10,8 @@ from telegram.ext import MessageHandler, Filters
 from scoreboard_helpers import scoreboard_table
 from setup_methods import init_schedule, add_players, init_scoreboard
 from update_methods import scoreboard, bet, wa_bets, get_matches, next_round, match_winners, current_bets
+
+PORT = int(os.environ.get('PORT', 5000))
 
 
 def echo(update, context):
@@ -20,8 +24,8 @@ def unknown(update, context):
 
 
 def main():
-    bot = telegram.Bot(token=TOKEN)
-    updater = Updater(token=TOKEN, use_context=True)
+    bot = telegram.Bot(token=os.environ['TOKEN'])
+    updater = Updater(token=os.environ['TOKEN'], use_context=True)
     dispatcher = updater.dispatcher
 
     # load from pickle files
@@ -69,11 +73,18 @@ def main():
     dispatcher.add_handler(unknown_handler)
 
     # start listening to messages
-    updater.start_polling()
+    if os.getenv('LOCAL') is not None and os.environ['LOCAL']:
+        updater.start_polling()
+    else:
+        updater.start_webhook(listen="0.0.0.0",
+                              port=int(PORT),
+                              url_path=os.environ['TOKEN'])
+        updater.bot.setWebhook('https://bb-ipl-betmaster.herokuapp.com/' + os.environ['TOKEN'])
 
     print(bot.get_me())
     print('Hello')
 
 
 if __name__ == '__main__':
+    load_dotenv()
     main()

@@ -1,7 +1,5 @@
-import pickle
 import DB
 from DB_functions import load_players
-from config import PERSISTENCE_PATH
 from player import Player
 
 

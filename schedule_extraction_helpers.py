@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 import logger_config
 from DB_functions import load_schedule, load_team_mappings
-from config import PERSISTENCE_PATH, TIMEZONE
-
+import os
 
 def convert_ist_to_zurich(ist_time):
     local = pytz.timezone('Europe/Zurich')
@@ -40,7 +39,7 @@ def get_parameters(row):
 def read_schedule():
     team_mappings = dict()
     schedule = dict()
-    with open(PERSISTENCE_PATH + '/ipl_schedule_raw_2021.csv', newline='', encoding='utf-8-sig') as csvfile:
+    with open(os.environ['PERSISTENCE_PATH'] + '/ipl_schedule_raw_2021.csv', newline='', encoding='utf-8-sig') as csvfile:
         raw_schedule = csv.reader(csvfile, delimiter=',')
         headers = next(raw_schedule)
         headers.append('SwissTime')
@@ -64,7 +63,7 @@ def read_schedule():
 
 
 def has_match_started(match_time):
-    now = datetime.now(tz=pytz.timezone(TIMEZONE))
+    now = datetime.now(tz=pytz.timezone('Europe/Zurich'))
     return now > match_time
 
 
@@ -72,7 +71,7 @@ def get_next_matches(days=1, schedule=None):
     if schedule is None:
         schedule = load_schedule()
     team_mappings = {value: key for key, value in load_team_mappings().items()}
-    now = datetime.now(tz=pytz.timezone(TIMEZONE))
+    now = datetime.now(tz=pytz.timezone('Europe/Zurich'))
     match_id = find_next_match(schedule, now)
     target_id = match_id
     while now + timedelta(days=days) >= schedule[str(target_id + 1)]['swiss_time']:
@@ -90,7 +89,7 @@ def get_next_matches(days=1, schedule=None):
     return matches
 
 
-def find_next_match(schedule, now=datetime.now(tz=pytz.timezone(TIMEZONE))):
+def find_next_match(schedule, now=datetime.now(tz=pytz.timezone('Europe/Zurich'))):
     start = 1
     end = len(schedule)
     match_id = -1

@@ -1,10 +1,10 @@
 import logging
 import pickle
+import os
 
 import DB
 import logger_config
 from DB_functions import load_players, write_scoreboard, write_players
-from config import PERSISTENCE_PATH
 from players_data_helpers import insert_players_into_database
 from schedule_extraction_helpers import read_schedule
 from scoreboard_helpers import initialize_scoreboard, scoreboard_table
@@ -15,9 +15,9 @@ def init_schedule(update, context):
         logger_config.logger.log(logging.INFO, "Extra arguments have been discarded")
     DB.schedule, DB.team_mappings = read_schedule()
 
-    with open(PERSISTENCE_PATH + '/' + 'schedule.pickle', 'wb') as f:
+    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'schedule.pickle', 'wb') as f:
         pickle.dump(DB.schedule, f)
-    with open(PERSISTENCE_PATH + '/' + 'team_mappings.pickle', 'wb') as f:
+    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'team_mappings.pickle', 'wb') as f:
         pickle.dump(DB.team_mappings, f)
 
     context.bot.send_message(chat_id=update.effective_chat.id, text='Initialized Schedule')
