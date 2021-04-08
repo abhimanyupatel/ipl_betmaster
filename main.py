@@ -7,7 +7,6 @@ from telegram.ext import Updater, CommandHandler
 from telegram.ext import MessageHandler, Filters
 
 # setup logging
-from scoreboard_helpers import scoreboard_table
 from setup_methods import init_schedule, add_players, init_scoreboard
 from update_methods import scoreboard, bet, wa_bets, get_matches, next_round, match_winners, current_bets
 
@@ -73,13 +72,13 @@ def main():
     dispatcher.add_handler(unknown_handler)
 
     # start listening to messages
-    if os.getenv('LOCAL') is not None and os.environ['LOCAL']:
-        updater.start_polling()
-    else:
+    if os.getenv('PROD') is not None and os.environ['PROD'] == 'TRUE':
         updater.start_webhook(listen="0.0.0.0",
                               port=int(PORT),
                               url_path=os.environ['TOKEN'])
         updater.bot.setWebhook('https://bb-ipl-betmaster.herokuapp.com/' + os.environ['TOKEN'])
+    else:
+        updater.start_polling()
 
     print(bot.get_me())
     print('Hello')

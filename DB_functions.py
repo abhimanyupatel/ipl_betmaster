@@ -1,8 +1,8 @@
-import os
 import pickle
+import psycopg2
 
 import DB
-import os
+from persistence.postgres_connection import setup_connection, close_connection
 
 
 def load_all_data_from_database():
@@ -13,46 +13,65 @@ def load_all_data_from_database():
 
 
 def load_scoreboard():
-    scoreboard_path = os.environ['PERSISTENCE_PATH'] + '/' + 'scoreboard.pickle'
-    if os.path.exists(scoreboard_path) and os.path.getsize(scoreboard_path) > 0:
-        with open(scoreboard_path, 'rb') as f:
-            DB.scoreboard = pickle.load(f)
+    cur, conn = setup_connection()
+    cur.execute("""SELECT scoreboard FROM ipl_data""")
+    data = cur.fetchone()
+    close_connection(cur, conn)
+    if data is not None:
+        if type(data) is tuple and data[0] is not None:
+            DB.scoreboard = pickle.loads(data[0])
     return DB.scoreboard
 
 
 def write_scoreboard(scoreboard):
     if scoreboard is None:
         raise ValueError("scoreboard cannot be None")
-    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'scoreboard.pickle', 'wb') as f:
-        pickle.dump(scoreboard, f)
+    scoreboard = pickle.dumps(scoreboard)
+    cur, conn = setup_connection()
+    cur.execute("""UPDATE ipl_data SET scoreboard = %s WHERE year = 2021""", (psycopg2.Binary(scoreboard),))
+    conn.commit()
+    close_connection(cur, conn)
 
 
 def load_schedule():
-    schedule_path = os.environ['PERSISTENCE_PATH'] + '/' + 'schedule.pickle'
-    if os.path.exists(schedule_path) and os.path.getsize(schedule_path) > 0:
-        with open(schedule_path, 'rb') as f:
-            DB.schedule = pickle.load(f)
+    cur, conn = setup_connection()
+    cur.execute("""SELECT schedule FROM ipl_data""")
+    data = cur.fetchone()
+    close_connection(cur, conn)
+    if data is not None:
+        if type(data) is tuple and data[0] is not None:
+            DB.scoreboard = pickle.loads(data[0])
     return DB.schedule
 
 
 def load_team_mappings():
-    team_mappings_path = os.environ['PERSISTENCE_PATH'] + '/' + 'team_mappings.pickle'
-    if os.path.exists(team_mappings_path) and os.path.getsize(team_mappings_path) > 0:
-        with open(team_mappings_path, 'rb') as f:
-            DB.team_mappings = pickle.load(f)
+    cur, conn = setup_connection()
+    cur.execute("""SELECT team_mappings FROM ipl_data""")
+    data = cur.fetchone()
+    close_connection(cur, conn)
+    if data is not None:
+        if type(data) is tuple and data[0] is not None:
+            DB.scoreboard = pickle.loads(data[0])
     return DB.team_mappings
 
 
 def load_players():
-    players_path = os.environ['PERSISTENCE_PATH'] + '/' + 'players.pickle'
-    if os.path.exists(players_path) and os.path.getsize(players_path) > 0:
-        with open(players_path, 'rb') as f:
-            DB.players = pickle.load(f)
+    cur, conn = setup_connection()
+    cur.execute("""SELECT players FROM ipl_data""")
+    data = cur.fetchone()
+    close_connection(cur, conn)
+    if data is not None:
+        if type(data) is tuple and data[0] is not None:
+            DB.scoreboard = pickle.loads(data[0])
     return DB.players
 
 
 def write_players(players):
     if players is None:
         raise ValueError("players cannot be None")
-    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'players.pickle', 'wb') as f:
-        pickle.dump(players, f)
+    players = pickle.dumps(players)
+    cur, conn = setup_connection()
+    cur.execute("""UPDATE ipl_data SET players = %s WHERE year = 2021""", (players,))
+    # cur.execute("""INSERT into ipl_data (players) VALUES (%s)""", (psycopg2.Binary(players),))
+    conn.commit()
+    close_connection(cur, conn)

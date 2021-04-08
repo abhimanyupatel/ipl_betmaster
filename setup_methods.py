@@ -2,9 +2,12 @@ import logging
 import pickle
 import os
 
+import psycopg2
+
 import DB
 import logger_config
 from DB_functions import load_players, write_scoreboard, write_players
+from persistence.postgres_connection import setup_connection, close_connection
 from players_data_helpers import insert_players_into_database
 from schedule_extraction_helpers import read_schedule
 from scoreboard_helpers import initialize_scoreboard, scoreboard_table
@@ -15,10 +18,13 @@ def init_schedule(update, context):
         logger_config.logger.log(logging.INFO, "Extra arguments have been discarded")
     DB.schedule, DB.team_mappings = read_schedule()
 
-    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'schedule.pickle', 'wb') as f:
-        pickle.dump(DB.schedule, f)
-    with open(os.environ['PERSISTENCE_PATH'] + '/' + 'team_mappings.pickle', 'wb') as f:
-        pickle.dump(DB.team_mappings, f)
+    schedule = pickle.dumps(DB.schedule)
+    team_mappings = pickle.dumps(DB.team_mappings)
+    cur, conn = setup_connection()
+    cur.execute("""UPDATE ipl_data SET schedule = %s WHERE year = 2021""", (psycopg2.Binary(schedule), ))
+    cur.execute("""UPDATE ipl_data SET team_mappings = %s WHERE year = 2021""", (psycopg2.Binary(team_mappings),))
+    conn.commit()
+    close_connection(cur, conn)
 
     context.bot.send_message(chat_id=update.effective_chat.id, text='Initialized Schedule')
 
